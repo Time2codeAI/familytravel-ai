@@ -1,16 +1,48 @@
-// src/app/api/chat/route.ts - AI chat endpoint voor familie reizen
 import { streamText } from 'ai';
-import { claudeModel, FAMILY_SYSTEM_PROMPTS } from '@/lib/ai/Claude';
-import { supabase } from '@/lib/supabase/client';
+import { anthropic } from '@ai-sdk/anthropic';
+
+// Claude model
+const claudeModel = anthropic('claude-3-5-sonnet-20241022');
+
+// System prompts
+const FAMILY_SYSTEM_PROMPTS = {
+  tripPlanner: `Je bent een expert familie-reisplanner. Help families met het plannen van veilige, leuke en praktische reizen. 
+
+Geef altijd:
+- Concrete, actionable adviezen
+- Veiligheidsinformatie waar relevant
+- Leeftijdsgeschikte suggesties
+- Budget-bewuste opties
+- Praktische tips voor ouders
+
+Houd antwoorden beknopt maar informatief.`,
+
+  restaurantExpert: `Je bent een expert in familie-vriendelijke restaurants. Help ouders restaurants te vinden die geschikt zijn voor kinderen.
+
+Focus op:
+- Kindermenu's en allergieën
+- Kinderstoelen en faciliteiten
+- Geluidstolerante omgeving
+- Prijs-kwaliteit verhouding
+- Praktische informatie (openingstijden, reserveringen)`,
+
+  activityGuide: `Je bent een expert in familie-activiteiten. Suggereer leuke, veilige en educatieve activiteiten voor gezinnen.
+
+Let op:
+- Leeftijdsgeschiktheid van alle kinderen
+- Veiligheidsaspecten
+- Educatieve waarde
+- Weersomstandigheden
+- Toegankelijkheid en kosten`
+};
 
 export async function POST(req: Request) {
   try {
-    const { messages, tripId, familyInfo } = await req.json();
+    const { messages, familyInfo } = await req.json();
 
-    // Bepaal welke system prompt te gebruiken op basis van de context
+    // Bepaal welke system prompt te gebruiken
     let systemPrompt = FAMILY_SYSTEM_PROMPTS.tripPlanner;
     
-    // Check de laatste message voor specifieke intents
     const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
     
     if (lastMessage.includes('restaurant') || lastMessage.includes('eten') || lastMessage.includes('lunch') || lastMessage.includes('diner')) {
@@ -22,10 +54,10 @@ export async function POST(req: Request) {
     // Voeg familie context toe aan system prompt
     if (familyInfo) {
       systemPrompt += `\n\nFamilie context voor deze conversatie:
-- Kinderen: ${familyInfo.ages?.join(', ') || 'geen'} jaar oud
-- Dieetbeperkingen: ${familyInfo.dietaryRestrictions?.join(', ') || 'geen'}
-- Interesses: ${familyInfo.interests?.join(', ') || 'algemeen'}
-- Budget: ${familyInfo.budget || 'geen voorkeur'}`;
+- Bestemming: ${familyInfo.destination || 'niet opgegeven'}
+- Kinderen: ${familyInfo.childrenAges || 'geen'} jaar oud
+- Interesses: ${familyInfo.interests || 'algemeen'}
+- Budget: ${familyInfo.budget === 'low' ? 'beperkt' : familyInfo.budget === 'medium' ? 'gemiddeld' : 'ruim'}`;
     }
 
     const result = await streamText({
@@ -46,28 +78,5 @@ export async function POST(req: Request) {
         headers: { 'Content-Type': 'application/json' }
       }
     );
-  }
-}
-
-// Helper functie om user context op te halen
-async function getUserContext(userId: string) {
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    const { data: trips } = await supabase
-      .from('trips')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    return { profile, recentTrips: trips };
-  } catch (error) {
-    console.error('Error fetching user context:', error);
-    return { profile: null, recentTrips: [] };
   }
 }
