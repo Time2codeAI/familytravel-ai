@@ -1,6 +1,7 @@
 'use client'
 import { useChat } from 'ai/react';
 import { useState } from 'react';
+import { PinButton } from '@/components/PinButton';
 
 export default function AIAssistant() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
@@ -138,28 +139,42 @@ export default function AIAssistant() {
                 <p className="text-sm text-gray-600">Stel je vragen over je reis!</p>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {messages.length === 0 && (
-                  <div className="text-center text-gray-500 mt-20">
-                    <div className="text-4xl mb-4">🤖</div>
-                    <p>Hallo! Ik ben je AI reis assistent.</p>
-                    <p className="text-sm mt-2">Vul je gezin info in en stel me een vraag!</p>
-                  </div>
-                )}
+             {/* Messages */}
+<div className="flex-1 p-4 overflow-y-auto space-y-4">
+  {messages.length === 0 && (
+    <div className="text-center text-gray-500 mt-20">
+      <div className="text-4xl mb-4">🤖</div>
+      <p>Hallo! Ik ben je AI reis assistent.</p>
+      <p className="text-sm mt-2">Vul je gezin info in en stel me een vraag!</p>
+    </div>
+  )}
 
-                {messages.map(message => (
-                  <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-lg ${
-                      message.role === 'user' 
-                        ? 'bg-blue-500 text-white rounded-br-none' 
-                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                    }`}>
-                      <div className="whitespace-pre-wrap">{message.content}</div>
-                    </div>
-                  </div>
-                ))}
-
+  {messages.map(message => (
+    <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-[80%] p-3 rounded-lg ${
+        message.role === 'user' 
+          ? 'bg-blue-500 text-white rounded-br-none' 
+          : 'bg-gray-100 text-gray-800 rounded-bl-none'
+      }`}>
+        <div className="whitespace-pre-wrap">{message.content}</div>
+        
+        {/* Add Pin Button for AI responses */}
+        {message.role === 'assistant' && message.content.length > 50 && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <PinButton 
+              item={{
+                title: `AI Suggestie - ${familyInfo.destination || 'Reis'}`,
+                description: message.content.substring(0, 200) + (message.content.length > 200 ? '...' : ''),
+                location: familyInfo.destination,
+                type: message.content.toLowerCase().includes('restaurant') ? 'restaurant' : 
+                      message.content.toLowerCase().includes('activiteit') ? 'activity' : 'general'
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  ))}
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 p-3 rounded-lg rounded-bl-none">
