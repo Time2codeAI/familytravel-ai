@@ -1,0 +1,84 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.chat_messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  trip_id uuid NOT NULL,
+  role text NOT NULL CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text, 'system'::text])),
+  content text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT chat_messages_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text NOT NULL,
+  full_name text,
+  family_size integer DEFAULT 1,
+  children_ages ARRAY DEFAULT '{}'::integer[],
+  dietary_restrictions ARRAY DEFAULT '{}'::text[],
+  mobility_needs text,
+  preferred_language text DEFAULT 'nl'::text,
+  emergency_contact jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.trip_expenses (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  trip_id uuid NOT NULL,
+  trip_item_id uuid,
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  amount integer NOT NULL,
+  category text,
+  description text,
+  receipt_url text,
+  expense_date timestamp with time zone DEFAULT now(),
+  split_among ARRAY DEFAULT '{}'::uuid[],
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT trip_expenses_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_expenses_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT trip_expenses_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id),
+  CONSTRAINT trip_expenses_trip_item_id_fkey FOREIGN KEY (trip_item_id) REFERENCES public.trip_items(id)
+);
+CREATE TABLE public.trip_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  trip_id uuid NOT NULL,
+  category text NOT NULL,
+  title text NOT NULL,
+  description text,
+  content jsonb DEFAULT '{}'::jsonb,
+  status text DEFAULT 'suggested'::text,
+  ai_prompt text,
+  ai_response text,
+  location_data jsonb DEFAULT '{}'::jsonb,
+  priority integer DEFAULT 0,
+  estimated_cost integer,
+  visit_date timestamp with time zone,
+  rating integer CHECK (rating >= 1 AND rating <= 5),
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT trip_items_pkey PRIMARY KEY (id),
+  CONSTRAINT trip_items_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.trips (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  destination text NOT NULL,
+  start_date date,
+  end_date date,
+  family_composition jsonb NOT NULL DEFAULT '{"adults": 2, "children": []}'::jsonb,
+  preferences jsonb DEFAULT '{}'::jsonb,
+  status text DEFAULT 'planning'::text,
+  total_budget integer,
+  is_public boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT trips_pkey PRIMARY KEY (id),
+  CONSTRAINT trips_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
