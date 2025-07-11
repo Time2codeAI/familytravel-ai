@@ -1,8 +1,8 @@
-import { streamText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { streamText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 // Claude model
-const claudeModel = anthropic('claude-3-5-sonnet-20241022');
+const claudeModel = anthropic("claude-3-5-sonnet-20241022");
 
 // System prompts
 const FAMILY_SYSTEM_PROMPTS = {
@@ -33,7 +33,7 @@ Let op:
 - Veiligheidsaspecten
 - Educatieve waarde
 - Weersomstandigheden
-- Toegankelijkheid en kosten`
+- Toegankelijkheid en kosten`,
 };
 
 export async function POST(req: Request) {
@@ -42,22 +42,38 @@ export async function POST(req: Request) {
 
     // Bepaal welke system prompt te gebruiken
     let systemPrompt = FAMILY_SYSTEM_PROMPTS.tripPlanner;
-    
-    const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-    
-    if (lastMessage.includes('restaurant') || lastMessage.includes('eten') || lastMessage.includes('lunch') || lastMessage.includes('diner')) {
+
+    const lastMessage =
+      messages[messages.length - 1]?.content?.toLowerCase() || "";
+
+    if (
+      lastMessage.includes("restaurant") ||
+      lastMessage.includes("eten") ||
+      lastMessage.includes("lunch") ||
+      lastMessage.includes("diner")
+    ) {
       systemPrompt = FAMILY_SYSTEM_PROMPTS.restaurantExpert;
-    } else if (lastMessage.includes('activiteit') || lastMessage.includes('bezienswaardigheden') || lastMessage.includes('doen')) {
+    } else if (
+      lastMessage.includes("activiteit") ||
+      lastMessage.includes("bezienswaardigheden") ||
+      lastMessage.includes("doen")
+    ) {
       systemPrompt = FAMILY_SYSTEM_PROMPTS.activityGuide;
     }
 
     // Voeg familie context toe aan system prompt
     if (familyInfo) {
       systemPrompt += `\n\nFamilie context voor deze conversatie:
-- Bestemming: ${familyInfo.destination || 'niet opgegeven'}
-- Kinderen: ${familyInfo.childrenAges || 'geen'} jaar oud
-- Interesses: ${familyInfo.interests || 'algemeen'}
-- Budget: ${familyInfo.budget === 'low' ? 'beperkt' : familyInfo.budget === 'medium' ? 'gemiddeld' : 'ruim'}`;
+- Bestemming: ${familyInfo.destination || "niet opgegeven"}
+- Kinderen: ${familyInfo.childrenAges || "geen"} jaar oud
+- Interesses: ${familyInfo.interests || "algemeen"}
+- Budget: ${
+        familyInfo.budget === "low"
+          ? "beperkt"
+          : familyInfo.budget === "medium"
+          ? "gemiddeld"
+          : "ruim"
+      }`;
     }
 
     const result = await streamText({
@@ -70,12 +86,14 @@ export async function POST(req: Request) {
 
     return result.toDataStreamResponse();
   } catch (error) {
-    console.error('Chat API Error:', error);
+    console.error("Chat API Error:", error);
     return new Response(
-      JSON.stringify({ error: 'Er ging iets mis bij het verwerken van je vraag.' }),
-      { 
+      JSON.stringify({
+        error: "Er ging iets mis bij het verwerken van je vraag.",
+      }),
+      {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
