@@ -214,7 +214,11 @@ export default function AIAssistant() {
                       </div>
                       {message.role === "assistant" && (
                         <PinButton
-                          content={message.content}
+                          item={{
+                            title: "AI Suggestion",
+                            description: message.content,
+                            type: "general",
+                          }}
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         />
                       )}
