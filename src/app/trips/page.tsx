@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function TripsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-8">
@@ -12,9 +14,9 @@ export default function TripsPage() {
           </div>
         </div>
         
-        <a href="/" className="inline-block mt-6 text-blue-500 hover:text-blue-700">
-          ← Terug naar homepage
-        </a>
+        <Link href="/" className="inline-block mt-6 text-blue-500 hover:text-blue-700">
+        ← Terug naar homepage
+        </Link>
       </div>
     </div>
   );
