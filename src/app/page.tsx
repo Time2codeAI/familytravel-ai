@@ -176,7 +176,7 @@ export default function TripsPage() {
                    <div className="mt-3 pt-3 border-t border-gray-100">
                      <div className="flex flex-wrap gap-1">
                        {trip.familyInfo.interests.slice(0, 3).map((interest, index) => (
-                         <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                         <span key={`item-${index}-${interest}`} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                            {interest.split(' ')[0]}
                          </span>
                        ))}
